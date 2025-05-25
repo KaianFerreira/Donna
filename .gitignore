@@ -1,0 +1,149 @@
+# ===================================================================
+# .gitignore - WhatsApp Bot com Baileys + n8n + IA
+# ===================================================================
+
+# 📱 WhatsApp Session Files (CRÍTICO - NUNCA VERSIONAR)
+whatsapp-baileys/auth_info_baileys/
+**/auth_info_baileys/
+*.session
+*.qr
+
+# 🗂️ Node.js Dependencies
+node_modules/
+**/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.yarn-integrity
+
+# 🐳 n8n Data (Dados locais do n8n)
+n8n_data/
+.n8n/
+**/.n8n/
+
+# 📊 Logs e Arquivos Temporários
+logs/
+*.log
+*.log.*
+log/
+temp/
+tmp/
+.cache/
+
+# 🔧 Arquivos de Configuração Local
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+config/local.json
+config/*.local.json
+
+# 🔑 Chaves e Segredos (API Keys, etc)
+.secrets
+secrets/
+*.key
+*.pem
+*.p12
+*.pfx
+api-keys.json
+credentials.json
+
+# 🖥️ Arquivos de Sistema (OS)
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# 📝 Editors e IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+*.sublime-*
+
+# 🗃️ Banco de Dados Local
+*.db
+*.sqlite
+*.sqlite3
+database.json
+db.json
+
+# 📦 Arquivos de Build/Dist
+dist/
+build/
+out/
+.next/
+.nuxt/
+
+# 🧪 Testes e Coverage
+coverage/
+.nyc_output/
+*.lcov
+.jest/
+
+# 📱 React Native (se houver mobile)
+.expo/
+.expo-shared/
+
+# 🔄 Git e Version Control
+.git/
+*.orig
+*.rej
+
+# 🏗️ Docker (dados persistentes)
+docker-data/
+volumes/
+.docker/
+
+# 📋 Backup Files
+*.bak
+*.backup
+*.old
+*.orig
+
+# 🎯 Arquivos Específicos do Projeto
+LIMPEZA-CONCLUIDA.md
+debug.log
+error.log
+access.log
+
+# 📊 Análise e Profiling
+*.prof
+*.trace
+.clinic/
+
+# 🔧 Ferramentas de Desenvolvimento
+.eslintcache
+.stylelintcache
+.parcel-cache/
+
+# 📱 Mobile Development
+*.jks
+*.keystore
+google-services.json
+GoogleService-Info.plist
+
+# 🌐 Web Assets Gerados
+*.map
+*.min.js
+*.min.css
+
+# ===================================================================
+# IMPORTANTE: Arquivos que DEVEM ser versionados:
+# - README.md
+# - start.sh, status.sh, stop.sh
+# - server.js, clear-session.js
+# - package.json (mas NÃO package-lock.json se for um projeto colaborativo)
+# - docker-compose.yml, docker-compose.simple.yml
+# - workflows/ (workflows do n8n)
+# =================================================================== 

@@ -1,0 +1,19 @@
+{
+  "name": "report-spur",
+  "version": "1.0.0",
+  "description": "Bot WhatsApp automatizado que integra **n8n**, **Baileys** e **DeepSeek IA** para criar um assistente virtual inteligente.",
+  "main": "test-workflow.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.1.0",
+    "node-fetch": "^2.7.0"
+  }
+}
