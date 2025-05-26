@@ -1,0 +1,19 @@
+{
+  "name": "whatsapp-baileys-bot",
+  "version": "1.0.0",
+  "description": "Bot WhatsApp com Baileys e n8n",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "clear-session": "node clear-session.js",
+    "fix-badmac": "node clear-session.js && echo '🔄 Agora execute: npm start'"
+  },
+  "dependencies": {
+    "@whiskeysockets/baileys": "^6.6.0",
+    "express": "^4.21.2",
+    "node-fetch": "^2.7.0",
+    "pino": "^9.7.0",
+    "qrcode-terminal": "^0.12.0"
+  }
+}
