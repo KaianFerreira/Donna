@@ -1,0 +1,169 @@
+{
+  "name": "WhatsApp Bot - Apenas IA",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "whatsapp",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook",
+      "name": "Webhook WhatsApp",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "whatsapp"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Processar mensagem recebida e preparar para IA\nconst data = $input.first().json;\nconsole.log('📥 Dados recebidos:', data);\n\n// Extrair informações\nconst from = data.from || '';\nconst message = data.message || '';\nconst history = data.history || [];\n\nconsole.log('📱 From:', from);\nconsole.log('💬 Message:', message);\nconsole.log('📚 History count:', history.length);\n\n// Construir contexto com histórico\nlet contextMessages = [];\n\n// Adicionar histórico se existir\nif (history.length > 0) {\n  history.forEach(msg => {\n    contextMessages.push({\n      role: msg.from === 'bot' ? 'assistant' : 'user',\n      content: msg.text\n    });\n  });\n}\n\n// Adicionar mensagem atual\ncontextMessages.push({\n  role: 'user',\n  content: message\n});\n\nconsole.log('🧠 Context messages:', contextMessages.length);\n\n// Retornar dados para enviar para IA\nreturn [{\n  json: {\n    to: from,\n    originalMessage: message,\n    contextMessages: contextMessages\n  }\n}];"
+      },
+      "id": "processar-mensagem",
+      "name": "Processar Mensagem",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.needsAI }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "verificar-ia",
+      "name": "Precisa IA?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "url": "https://api.deepseek.com/chat/completions",
+        "options": {
+          "headers": {
+            "Authorization": "Bearer sk-your-deepseek-api-key-here",
+            "Content-Type": "application/json"
+          }
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"deepseek-chat\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"Você é um assistente virtual amigável e prestativo. Responda de forma educada, clara e útil. Mantenha as respostas concisas mas informativas. Use emojis quando apropriado para tornar a conversa mais amigável. Você tem acesso ao histórico da conversa para dar respostas mais contextualizadas.\"\n    }\n  ].concat({{ $json.contextMessages }}),\n  \"max_tokens\": 500,\n  \"temperature\": 0.7\n}",
+        "sendQuery": false,
+        "sendHeaders": false
+      },
+      "id": "deepseek-api",
+      "name": "DeepSeek API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [900, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Processar resposta da IA e manter o 'to' original\nconst aiResponse = $input.first().json;\nconst originalData = $('Processar Mensagem').first().json;\n\nconsole.log('🤖 Resposta da IA:', aiResponse);\nconsole.log('📋 Dados originais:', originalData);\n\nlet response = '';\n\n// Extrair resposta da IA\nif (aiResponse.choices && aiResponse.choices[0] && aiResponse.choices[0].message) {\n  response = aiResponse.choices[0].message.content;\n} else {\n  // Fallback se a IA não responder\n  response = '🤖 Desculpe, não consegui processar sua mensagem no momento. Tente novamente ou digite \"ajuda\" para ver as opções disponíveis.';\n}\n\n// Retornar com o 'to' original preservado\nreturn [{\n  json: {\n    to: originalData.to,\n    response: response,\n    type: 'ai_response'\n  }\n}];"
+      },
+      "id": "processar-ia",
+      "name": "Processar IA",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1120, 200]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:3000/send",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"to\": \"{{ $json.to }}\",\n  \"message\": \"{{ $json.response }}\"\n}",
+        "options": {}
+      },
+      "id": "enviar-resposta",
+      "name": "Enviar Resposta",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1340, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "OK"
+      },
+      "id": "resposta-webhook",
+      "name": "Resposta Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1340, 300]
+    }
+  ],
+  "connections": {
+    "Webhook WhatsApp": {
+      "main": [
+        [
+          {
+            "node": "Processar Mensagem",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Processar Mensagem": {
+      "main": [
+        [
+          {
+            "node": "DeepSeek API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DeepSeek API": {
+      "main": [
+        [
+          {
+            "node": "Processar IA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Processar IA": {
+      "main": [
+        [
+          {
+            "node": "Enviar Resposta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar Resposta": {
+      "main": [
+        [
+          {
+            "node": "Resposta Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "versionId": "1",
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "id": "whatsapp-bot-main",
+  "tags": []
+} 
