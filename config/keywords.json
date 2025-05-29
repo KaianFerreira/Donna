@@ -1,0 +1,33 @@
+{
+  "keywords": {
+    "horario": {
+      "triggers": ["horario", "horário", "funcionamento", "aberto", "fechado", "atendimento"],
+      "response": "🕐 **Horário de Funcionamento:**\n\nSegunda a Sexta: 8h às 18h\nSábado: 8h às 12h\nDomingo: Fechado\n\nEstamos sempre prontos para te atender! 😊"
+    },
+    "precos": {
+      "triggers": ["preço", "preco", "valor", "quanto custa", "tabela", "valores"],
+      "response": "💰 **Tabela de Preços:**\n\nConsulte nossa tabela completa em: [link]\n\nPara orçamentos personalizados, entre em contato conosco!\n\nPosso te ajudar com algo específico? 🤔"
+    },
+    "localizacao": {
+      "triggers": ["endereço", "endereco", "localização", "localizacao", "onde", "local"],
+      "response": "📍 **Nossa Localização:**\n\nRua Example, 123 - Centro\nCidade - Estado\nCEP: 12345-678\n\nEstacionamento gratuito disponível! 🚗"
+    },
+    "contato": {
+      "triggers": ["contato", "telefone", "email", "whatsapp", "falar"],
+      "response": "📞 **Nossos Contatos:**\n\nWhatsApp: (11) 99999-9999\nTelefone: (11) 3333-3333\nEmail: contato@empresa.com\n\nEstou aqui para te ajudar agora mesmo! 💬"
+    },
+    "ajuda": {
+      "triggers": ["ajuda", "help", "menu", "opções", "opcoes", "comandos"],
+      "response": "🤖 **Como posso te ajudar?**\n\nDigite uma das opções:\n• *Horário* - Horário de funcionamento\n• *Preços* - Tabela de valores\n• *Localização* - Nosso endereço\n• *Contato* - Informações de contato\n\nOu me conte o que você precisa! 😊"
+    },
+    "saudacao": {
+      "triggers": ["oi", "olá", "ola", "bom dia", "boa tarde", "boa noite", "hey"],
+      "response": "Olá! 👋 Seja bem-vindo(a)!\n\nSou o assistente virtual e estou aqui para te ajudar.\n\nDigite *ajuda* para ver as opções ou me conte como posso te auxiliar! 😊"
+    }
+  },
+  "escalation": {
+    "contact_number": "5511999999999",
+    "message": "🔄 **Escalando para atendimento humano...**\n\nSua pergunta foi encaminhada para nossa equipe. Em breve alguém entrará em contato!\n\nObrigado pela paciência! 🙏"
+  },
+  "default_response": "🤔 Não consegui entender sua mensagem.\n\nDigite *ajuda* para ver as opções disponíveis ou reformule sua pergunta.\n\nEstou aqui para te ajudar! 😊"
+} 
