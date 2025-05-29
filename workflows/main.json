@@ -1,5 +1,5 @@
 {
-  "name": "WhatsApp Bot - Apenas IA",
+  "name": "My workflow",
   "nodes": [
     {
       "parameters": {
@@ -8,99 +8,169 @@
         "responseMode": "responseNode",
         "options": {}
       },
-      "id": "webhook",
+      "id": "d94d2139-d6e1-4e1c-98da-6297aa43ed3a",
       "name": "Webhook WhatsApp",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
-      "position": [240, 300],
+      "position": [
+        -1000,
+        0
+      ],
       "webhookId": "whatsapp"
     },
     {
       "parameters": {
-        "jsCode": "// Processar mensagem recebida e preparar para IA\nconst data = $input.first().json;\nconsole.log('📥 Dados recebidos:', data);\n\n// Extrair informações\nconst from = data.from || '';\nconst message = data.message || '';\nconst history = data.history || [];\n\nconsole.log('📱 From:', from);\nconsole.log('💬 Message:', message);\nconsole.log('📚 History count:', history.length);\n\n// Construir contexto com histórico\nlet contextMessages = [];\n\n// Adicionar histórico se existir\nif (history.length > 0) {\n  history.forEach(msg => {\n    contextMessages.push({\n      role: msg.from === 'bot' ? 'assistant' : 'user',\n      content: msg.text\n    });\n  });\n}\n\n// Adicionar mensagem atual\ncontextMessages.push({\n  role: 'user',\n  content: message\n});\n\nconsole.log('🧠 Context messages:', contextMessages.length);\n\n// Retornar dados para enviar para IA\nreturn [{\n  json: {\n    to: from,\n    originalMessage: message,\n    contextMessages: contextMessages\n  }\n}];"
+        "jsCode": "// ===================================================================\n// PROCESSADOR DE CONTEXTO PARA IA - WhatsApp Bot\n// ===================================================================\n// Este código processa mensagens recebidas e prepara contexto \n// inteligente para a IA responder como você (persona pessoal)\n// ===================================================================\n\n// Processar mensagem recebida e preparar para IA\nconst data = $input.first().json.body;\nconsole.log('📥 Dados recebidos do WhatsApp:', JSON.stringify(data, null, 2));\n\n// ===================================================================\n// EXTRAÇÃO E VALIDAÇÃO DE DADOS\n// ===================================================================\n\nconst from = data.from || '';\nconst fromName = data.fromName || 'Usuário';\nconst message = data.message || '';\nconst history = data.history || [];\nconst messageId = data.messageId || '';\nconst timestamp = data.timestamp || new Date().toISOString();\n\n// Validações básicas\nif (!from || !message) {\n    console.error('❌ Dados inválidos - from ou message ausentes');\n    return { json: { error: 'Dados inválidos' } };\n}\n\nconsole.log('📱 Remetente:', fromName, '(' + from + ')');\nconsole.log('💬 Mensagem:', message);\nconsole.log('📚 Histórico disponível:', history.length, 'mensagens');\nconsole.log('🕐 Timestamp:', timestamp);\n\n// ===================================================================\n// VERIFICAÇÃO DE PREFIXO BOT\n// ===================================================================\n\n// Verificar se a mensagem começa com \"bot\" (case insensitive)\nconst messageText = message.trim();\nconst startsWithBot = /^bot\\s+/i.test(messageText);\n\nconsole.log('🤖 Verificação de prefixo \"bot\":', startsWithBot);\n\n// Se não começa com \"bot\", retornar sem processar para IA\nif (!startsWithBot) {\n    console.log('⏭️ Mensagem não direcionada para bot - ignorando processamento IA');\n    return {\n        json: {\n            shouldProcessAI: false,\n            reason: 'Mensagem não contém prefixo \"bot\"',\n            originalMessage: message,\n            from: from,\n            fromName: fromName,\n            messageId: messageId,\n            timestamp: timestamp\n        }\n    };\n}\n\n// Remover o prefixo \"bot\" da mensagem para processamento\nconst cleanMessage = messageText.replace(/^bot\\s+/i, '').trim();\nconsole.log('🧹 Mensagem limpa (sem prefixo):', cleanMessage);\n\n// Validar se ainda há conteúdo após remover prefixo\nif (!cleanMessage) {\n    console.log('❌ Mensagem vazia após remover prefixo \"bot\"');\n    return {\n        json: {\n            shouldProcessAI: false,\n            reason: 'Mensagem vazia após remover prefixo \"bot\"',\n            originalMessage: message,\n            from: from,\n            fromName: fromName,\n            messageId: messageId,\n            timestamp: timestamp\n        }\n    };\n}\n\n// ===================================================================\n// ANÁLISE DO CONTEXTO E HISTÓRICO\n// ===================================================================\n\n// Analisar padrões no histórico\nconst historyAnalysis = analyzeHistory(history);\nconsole.log('🔍 Análise do histórico:', historyAnalysis);\n\n// Construir contexto inteligente\nlet contextMessages = [];\n\n// ===================================================================\n// SISTEMA DE PROMPTS PERSONALIZADOS\n// ===================================================================\n\n// Prompt principal que define sua persona\nconst systemPrompt = `Você é Kaian, uma pessoa real respondendo suas mensagens pessoais do WhatsApp. \n\nINSTRUÇÕES CRÍTICAS:\n- Responda SEMPRE como se fosse você mesmo (Kaian) falando\n- Use o histórico da conversa como CONTEXTO PESSOAL da sua relação com ${fromName}\n- Mantenha consistência com conversas anteriores\n- Responda de forma natural, como em uma conversa real do WhatsApp\n- Use linguagem casual, emojis quando apropriado\n- Seja autêntico e pessoal, não robótico\n\nCONTEXTO DA CONVERSA:\n- Você está conversando com: ${fromName}\n- Tipo de relacionamento: ${determineRelationshipType(fromName, history)}\n- Histórico de mensagens: ${history.length} mensagens anteriores\n- Tom da conversa: ${historyAnalysis.tone}\n- Tópicos recorrentes: ${historyAnalysis.topics.join(', ') || 'Nenhum identificado'}\n\nIMPORTANTE: Use o histórico abaixo para entender o contexto e manter coerência na conversa.`;\n\n// Adicionar prompt do sistema\ncontextMessages.push({\n    role: 'system',\n    content: systemPrompt\n});\n\n// ===================================================================\n// PROCESSAMENTO DO HISTÓRICO\n// ===================================================================\n\nif (history.length > 0) {\n    console.log('📖 Processando histórico para contexto...');\n    \n    // Adicionar resumo do histórico se muito longo\n    if (history.length > 15) {\n        const summary = summarizeHistory(history);\n        contextMessages.push({\n            role: 'system',\n            content: `RESUMO DA CONVERSA ANTERIOR: ${summary}`\n        });\n        \n        // Adicionar apenas as últimas 10 mensagens para contexto imediato\n        const recentHistory = history.slice(-10);\n        recentHistory.forEach(msg => {\n            contextMessages.push({\n                role: msg.from === 'bot' ? 'assistant' : 'user',\n                content: msg.text\n            });\n        });\n        \n        console.log('📝 Histórico resumido + últimas 10 mensagens adicionadas');\n    } else {\n        // Adicionar todo o histórico se não for muito longo\n        history.forEach(msg => {\n            contextMessages.push({\n                role: msg.from === 'bot' ? 'assistant' : 'user',\n                content: msg.text\n            });\n        });\n        \n        console.log('📝 Todo o histórico adicionado ao contexto');\n    }\n} else {\n    // Primeira interação - prompt especial\n    contextMessages.push({\n        role: 'system',\n        content: `Esta é a primeira mensagem de ${fromName}. Responda de forma acolhedora e natural, como se fosse o início de uma conversa pessoal.`\n    });\n    \n    console.log('🆕 Primeira interação detectada');\n}\n\n// ===================================================================\n// ADIÇÃO DA MENSAGEM ATUAL\n// ===================================================================\n\n// Prompt de contexto imediato (usando mensagem limpa)\nconst immediateContextPrompt = `${fromName} acabou de enviar: \"${cleanMessage}\"\n\nResponda como Kaian, considerando:\n- Seu relacionamento com ${fromName}\n- O contexto da conversa anterior\n- O tom e estilo natural de suas respostas\n- Seja genuíno e pessoal, não formal ou robótico\n\nResposta:`;\n\ncontextMessages.push({\n    role: 'user',\n    content: immediateContextPrompt\n});\n\n// ===================================================================\n// ESTATÍSTICAS E LOGS FINAIS\n// ===================================================================\n\nconst stats = {\n    totalMessages: contextMessages.length,\n    historyUsed: history.length,\n    relationshipType: determineRelationshipType(fromName, history),\n    conversationTone: historyAnalysis.tone,\n    hasContext: history.length > 0,\n    prefixDetected: true,\n    cleanMessage: cleanMessage\n};\n\nconsole.log('🧠 Contexto preparado:', stats);\nconsole.log('📊 Mensagens no contexto:', contextMessages.length);\n\n// ===================================================================\n// RETORNO ESTRUTURADO\n// ===================================================================\n\nreturn {\n    json: {\n        // Indicador de que deve processar IA\n        shouldProcessAI: true,\n        \n        // Dados para envio\n        to: from,\n        toName: fromName,\n        originalMessage: message,\n        cleanMessage: cleanMessage, // Mensagem sem prefixo \"bot\"\n        messageId: messageId,\n        \n        // Contexto para IA\n        contextMessages: contextMessages,\n        \n        // Metadados\n        metadata: {\n            timestamp: timestamp,\n            historyCount: history.length,\n            relationshipType: stats.relationshipType,\n            conversationTone: stats.conversationTone,\n            isFirstInteraction: history.length === 0,\n            contextQuality: history.length > 5 ? 'high' : history.length > 0 ? 'medium' : 'low',\n            hadBotPrefix: true\n        },\n        \n        // Configurações para IA\n        aiConfig: {\n            temperature: 0.8, // Mais criativo e natural\n            maxTokens: 500,   // Respostas concisas como WhatsApp\n            presencePenalty: 0.6, // Evitar repetições\n            frequencyPenalty: 0.4  // Variar vocabulário\n        }\n    }\n};\n\n// ===================================================================\n// FUNÇÕES AUXILIARES\n// ===================================================================\n\nfunction analyzeHistory(history) {\n    if (!history || history.length === 0) {\n        return { tone: 'neutro', topics: [], sentiment: 'neutro' };\n    }\n    \n    const texts = history.map(msg => msg.text.toLowerCase());\n    const allText = texts.join(' ');\n    \n    // Análise de tom\n    let tone = 'neutro';\n    if (allText.includes('kkk') || allText.includes('haha') || allText.includes('😂')) {\n        tone = 'descontraído';\n    } else if (allText.includes('obrigad') || allText.includes('por favor')) {\n        tone = 'formal';\n    } else if (allText.includes('amor') || allText.includes('❤️')) {\n        tone = 'carinhoso';\n    }\n    \n    // Tópicos recorrentes (palavras-chave)\n    const topics = [];\n    if (allText.includes('trabalho') || allText.includes('job')) topics.push('trabalho');\n    if (allText.includes('família') || allText.includes('pai') || allText.includes('mãe')) topics.push('família');\n    if (allText.includes('amor') || allText.includes('relacionamento')) topics.push('relacionamento');\n    if (allText.includes('projeto') || allText.includes('código')) topics.push('tecnologia');\n    \n    return { tone, topics, sentiment: tone };\n}\n\nfunction determineRelationshipType(name, history) {\n    if (!history || history.length === 0) return 'novo contato';\n    \n    const allText = history.map(msg => msg.text.toLowerCase()).join(' ');\n    \n    if (allText.includes('amor') || allText.includes('❤️') || allText.includes('querido')) {\n        return 'relacionamento íntimo';\n    } else if (allText.includes('trabalho') || allText.includes('projeto') || allText.includes('reunião')) {\n        return 'contato profissional';\n    } else if (allText.includes('família') || name.toLowerCase().includes('mãe') || name.toLowerCase().includes('pai')) {\n        return 'família';\n    } else if (history.length > 10) {\n        return 'amigo próximo';\n    } else {\n        return 'conhecido';\n    }\n}\n\nfunction summarizeHistory(history) {\n    if (!history || history.length === 0) return 'Nenhum histórico anterior';\n    \n    const recentMessages = history.slice(-5);\n    const topics = recentMessages.map(msg => msg.text).join('. ');\n    \n    return `Últimos tópicos discutidos: ${topics.substring(0, 200)}...`;\n} "
       },
-      "id": "processar-mensagem",
+      "id": "20ed24e5-a845-4613-95f3-8e4c9d8644ca",
       "name": "Processar Mensagem",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [460, 300]
+      "position": [
+        -780,
+        0
+      ]
     },
     {
       "parameters": {
-        "conditions": {
-          "boolean": [
-            {
-              "value1": "={{ $json.needsAI }}",
-              "value2": true
-            }
-          ]
-        }
+        "jsCode": "return {\n  json: {\n    to: $('Processar Mensagem').first().json.toName,\n    response: $input.first().json.text,\n  }\n};"
       },
-      "id": "verificar-ia",
-      "name": "Precisa IA?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 1,
-      "position": [680, 300]
-    },
-    {
-      "parameters": {
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
-        "url": "https://api.deepseek.com/chat/completions",
-        "options": {
-          "headers": {
-            "Authorization": "Bearer sk-your-deepseek-api-key-here",
-            "Content-Type": "application/json"
-          }
-        },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"deepseek-chat\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"Você é um assistente virtual amigável e prestativo. Responda de forma educada, clara e útil. Mantenha as respostas concisas mas informativas. Use emojis quando apropriado para tornar a conversa mais amigável. Você tem acesso ao histórico da conversa para dar respostas mais contextualizadas.\"\n    }\n  ].concat({{ $json.contextMessages }}),\n  \"max_tokens\": 500,\n  \"temperature\": 0.7\n}",
-        "sendQuery": false,
-        "sendHeaders": false
-      },
-      "id": "deepseek-api",
-      "name": "DeepSeek API",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
-      "position": [900, 200]
-    },
-    {
-      "parameters": {
-        "jsCode": "// Processar resposta da IA e manter o 'to' original\nconst aiResponse = $input.first().json;\nconst originalData = $('Processar Mensagem').first().json;\n\nconsole.log('🤖 Resposta da IA:', aiResponse);\nconsole.log('📋 Dados originais:', originalData);\n\nlet response = '';\n\n// Extrair resposta da IA\nif (aiResponse.choices && aiResponse.choices[0] && aiResponse.choices[0].message) {\n  response = aiResponse.choices[0].message.content;\n} else {\n  // Fallback se a IA não responder\n  response = '🤖 Desculpe, não consegui processar sua mensagem no momento. Tente novamente ou digite \"ajuda\" para ver as opções disponíveis.';\n}\n\n// Retornar com o 'to' original preservado\nreturn [{\n  json: {\n    to: originalData.to,\n    response: response,\n    type: 'ai_response'\n  }\n}];"
-      },
-      "id": "processar-ia",
+      "id": "6e7e3eee-fe16-4fb1-9b2a-30315cd48c0f",
       "name": "Processar IA",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1120, 200]
+      "position": [
+        40,
+        100
+      ]
     },
     {
       "parameters": {
-        "url": "http://localhost:3000/send",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={\n  \"to\": \"{{ $json.to }}\",\n  \"message\": \"{{ $json.response }}\"\n}",
         "options": {}
       },
-      "id": "enviar-resposta",
-      "name": "Enviar Resposta",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -560,
+        200
+      ],
+      "id": "5ae6836d-0ea3-4788-9657-262144861c98",
+      "name": "When chat message received",
+      "webhookId": "8fcf778c-c5a8-4c87-a948-e808c59d8a8a"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ JSON.stringify($json.contextMessages) }}\n{{ $json.metadata }}",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        -340,
+        100
+      ],
+      "id": "9e2cf26b-110a-4a1b-b83d-f5eb40570795",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatDeepSeek",
+      "typeVersion": 1,
+      "position": [
+        -252,
+        320
+      ],
+      "id": "4219ab64-242f-45cb-81bb-67df5fac0677",
+      "name": "DeepSeek Chat Model",
+      "credentials": {
+        "deepSeekApi": {
+          "id": "P26lu03pCrIBm7fq",
+          "name": "DeepSeek account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://172.21.162.67:3000/send",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "=message",
+              "value": "={{ $json.response }}"
+            },
+            {
+              "name": "to",
+              "value": "={{ $('Processar Mensagem').item.json.to }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a81c8db6-ddf8-4d6d-82d6-6fcff839ec2a",
+      "name": "Enviar Resposta1",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
-      "position": [1340, 300]
+      "position": [
+        256,
+        100
+      ]
     },
     {
       "parameters": {
         "respondWith": "text",
-        "responseBody": "OK"
+        "responseBody": "OK",
+        "options": {}
       },
-      "id": "resposta-webhook",
-      "name": "Resposta Webhook",
+      "id": "0c2390f1-e35e-45c2-9500-af090d2b34aa",
+      "name": "Resposta Webhook1",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
-      "position": [1340, 300]
+      "position": [
+        476,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "e7fa8d23-d1d2-4603-8deb-df781f069901",
+              "leftValue": "={{ $json.shouldProcessAI }}",
+              "rightValue": "=true",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -560,
+        0
+      ],
+      "id": "9b267b62-96d0-47f4-91fc-47d9d238e560",
+      "name": "If"
     }
   ],
+  "pinData": {},
   "connections": {
     "Webhook WhatsApp": {
       "main": [
@@ -117,18 +187,7 @@
       "main": [
         [
           {
-            "node": "DeepSeek API",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "DeepSeek API": {
-      "main": [
-        [
-          {
-            "node": "Processar IA",
+            "node": "If",
             "type": "main",
             "index": 0
           }
@@ -139,18 +198,62 @@
       "main": [
         [
           {
-            "node": "Enviar Resposta",
+            "node": "Enviar Resposta1",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Enviar Resposta": {
+    "DeepSeek Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When chat message received": {
       "main": [
         [
           {
-            "node": "Resposta Webhook",
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Processar IA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar Resposta1": {
+      "main": [
+        [
+          {
+            "node": "Resposta Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
             "type": "main",
             "index": 0
           }
@@ -158,12 +261,15 @@
       ]
     }
   },
-  "active": false,
-  "settings": {},
-  "versionId": "1",
-  "meta": {
-    "templateCredsSetupCompleted": true
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
   },
-  "id": "whatsapp-bot-main",
+  "versionId": "84fab6df-ad45-42a5-b897-1d36826d9106",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b4b35a51d99b3f913ca0cb1b8b6d913dbb04a2435b646a560aee5e09482599dc"
+  },
+  "id": "iylWHjrDSSH0wxWV",
   "tags": []
-} 
+}
