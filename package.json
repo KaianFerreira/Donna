@@ -2,16 +2,33 @@
   "name": "report-spur",
   "version": "1.0.0",
   "description": "Bot WhatsApp automatizado que integra **n8n**, **Baileys** e **DeepSeek IA** para criar um assistente virtual inteligente.",
-  "main": "test-workflow.js",
+  "main": "whatsapp-baileys/server.js",
+  "engines": {
+    "node": "22.14.0",
+    "npm": ">=8.0.0"
+  },
   "directories": {
     "doc": "docs"
   },
   "scripts": {
+    "start": "./start.sh",
+    "status": "./status.sh", 
+    "stop": "./stop.sh",
+    "setup-node": "nvm use",
+    "prestart": "nvm use 2>/dev/null || echo 'nvm not available, using system node'",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "whatsapp",
+    "bot",
+    "baileys",
+    "n8n",
+    "ai",
+    "automation",
+    "deepseek"
+  ],
+  "author": "Kaian Ferreira",
+  "license": "MIT",
   "dependencies": {
     "express": "^5.1.0",
     "node-fetch": "^2.7.0"

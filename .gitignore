@@ -112,7 +112,6 @@ volumes/
 *.orig
 
 # 🎯 Arquivos Específicos do Projeto
-LIMPEZA-CONCLUIDA.md
 debug.log
 error.log
 access.log
@@ -141,9 +140,17 @@ GoogleService-Info.plist
 # ===================================================================
 # IMPORTANTE: Arquivos que DEVEM ser versionados:
 # - README.md
+# - .nvmrc (versão do Node.js)
+# - setup-node.sh (script de configuração)
 # - start.sh, status.sh, stop.sh
 # - server.js, clear-session.js
 # - package.json (mas NÃO package-lock.json se for um projeto colaborativo)
 # - docker-compose.yml, docker-compose.simple.yml
 # - workflows/ (workflows do n8n)
+# - docs/ (documentação do projeto):
+#   * baileys-manual-setup.md
+#   * manual-configuration.md
+#   * step-by-step-setup.md
+#   * usage-examples.md
+#   * personal-whatsapp.md
 # =================================================================== 

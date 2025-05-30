@@ -9,34 +9,66 @@ if ! docker info > /dev/null 2>&1; then
     exit 1
 fi
 
-# Verificar se Node.js está instalado (incluindo nvm)
-check_node() {
-    # Tentar carregar nvm se existir
+# Função para configurar Node.js com nvm
+setup_node() {
+    echo "🔧 Configurando Node.js..."
+    
+    # Carregar nvm se existir
     if [ -f "$HOME/.nvm/nvm.sh" ]; then
+        echo "📦 Carregando nvm..."
         source "$HOME/.nvm/nvm.sh"
+        source "$HOME/.nvm/bash_completion" 2>/dev/null || true
+        
+        # Verificar se existe .nvmrc
+        if [ -f ".nvmrc" ]; then
+            NODE_VERSION=$(cat .nvmrc)
+            echo "📌 Versão do Node.js especificada: v${NODE_VERSION}"
+            
+            # Verificar se a versão está instalada
+            if ! nvm list | grep -q "v${NODE_VERSION}"; then
+                echo "📥 Instalando Node.js v${NODE_VERSION}..."
+                nvm install "${NODE_VERSION}"
+            fi
+            
+            # Usar a versão especificada
+            echo "🔄 Usando Node.js v${NODE_VERSION}..."
+            nvm use "${NODE_VERSION}"
+        else
+            echo "⚠️  Arquivo .nvmrc não encontrado, usando versão padrão"
+            nvm use node
+        fi
+    else
+        echo "⚠️  nvm não encontrado, verificando Node.js global..."
     fi
     
     # Verificar se node está disponível
     if command -v node &> /dev/null; then
         NODE_VERSION=$(node --version)
-        echo "✅ Node.js encontrado: $NODE_VERSION"
+        echo "✅ Node.js ativo: $NODE_VERSION"
         return 0
     else
         return 1
     fi
 }
 
-if ! check_node; then
-    echo "❌ Node.js não encontrado."
-    echo "💡 Instale Node.js ou verifique se o nvm está configurado:"
+# Configurar Node.js
+if ! setup_node; then
+    echo "❌ Node.js não foi configurado corretamente."
+    echo "💡 Para instalar nvm e Node.js:"
     echo "   curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash"
-    echo "   nvm install node"
+    echo "   source ~/.bashrc"
+    echo "   nvm install --lts"
     exit 1
 fi
 
-# Carregar nvm para o resto do script se existir
+# Garantir que nvm está carregado para o resto do script
 if [ -f "$HOME/.nvm/nvm.sh" ]; then
     source "$HOME/.nvm/nvm.sh"
+    
+    # Usar a versão do .nvmrc se existir
+    if [ -f ".nvmrc" ]; then
+        nvm use
+    fi
 fi
 
 # Função para limpar processos ao sair
@@ -65,9 +97,16 @@ trap cleanup SIGINT SIGTERM
 
 echo "📦 Verificando dependências do Baileys..."
 cd whatsapp-baileys
+
+# Garantir que estamos usando a versão correta do Node.js
+if [ -f "$HOME/.nvm/nvm.sh" ] && [ -f "../.nvmrc" ]; then
+    source "$HOME/.nvm/nvm.sh"
+    nvm use "../.nvmrc" 2>/dev/null || nvm use
+fi
+
 if [ ! -d "node_modules" ]; then
     echo "📥 Instalando dependências..."
-    npm install
+    npm ci
 fi
 cd ..
 
@@ -113,6 +152,13 @@ echo "   Login: admin / admin123"
 echo ""
 echo "📱 Iniciando servidor Baileys..."
 cd whatsapp-baileys
+
+# Garantir novamente que estamos usando a versão correta do Node.js antes de iniciar o servidor
+if [ -f "$HOME/.nvm/nvm.sh" ] && [ -f "../.nvmrc" ]; then
+    source "$HOME/.nvm/nvm.sh"
+    nvm use "../.nvmrc" 2>/dev/null || nvm use
+fi
+
 node server.js &
 BAILEYS_PID=$!
 
@@ -124,6 +170,7 @@ echo "🎉 TUDO PRONTO!"
 echo "==============="
 echo ""
 echo "📊 Status dos Serviços:"
+echo "  • Node.js: $(node --version)"
 echo "  • n8n:     http://localhost:5678 (admin/admin123)"
 echo "  • Baileys: http://localhost:3000/status"
 echo ""
